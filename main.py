@@ -80,8 +80,8 @@ async def main(config_json: Optional[Union[str, Path]] = None) -> None:
             break
         except Exception as err:
             logger.exception(err)
-        finally:
-            await client.aclose()
+
+    await client.aclose()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s_%(levelname)s %(name)s %(funcName)s: %(message)s')
