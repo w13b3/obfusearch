@@ -8,18 +8,17 @@ from typing import Union, Optional
 import json
 import logging
 import dataclasses
-import importlib.resources as pkg_resources
 from pathlib import Path
 
-DEFAULT_CONFIG = "sources.json"
+# ./dat/sources.json
+DEFAULT_CONFIG = Path(__file__).parent.parent / "dat" / "sources.json"
 
 logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
-class Data:
+class _Data:
     exclude_regex: list
-    search_queries: list
     search_engines: list
     rss_feeds: list
     user_agents: list
@@ -32,10 +31,10 @@ class Data:
 class _Configuration:
     _source_path: Union[str, Path] = Path
     _mtime: float = 0
-    _data: Data = Data
+    _data: _Data = _Data
 
     @property
-    def data(self) -> Data:
+    def data(self) -> _Data:
         return self._data
 
     @property
@@ -47,21 +46,29 @@ class _Configuration:
         self._source_path = Path(value)
 
     @staticmethod
-    def _object_hook(obj_pairs: list[tuple, ...]) -> Data:
+    def _object_hook(obj_pairs: list[tuple, ...]) -> _Data:
         """hook for object pairs to `Data` class"""
-        return Data(**dict(obj_pairs))
+        return _Data(**dict(obj_pairs))
 
     def __init__(self, config_json: Optional[Union[str, Path]] = None) -> None:
-        self._source_path = config_json
+        """
+        :param config_json: json-file like ./dat/sources_template.json
+        :type: str or Path
+        """
+        self._source_path = Path(config_json)
 
-    def __call__(self, config_json: Optional[Union[str, Path]] = None) -> Data:
-        config_json = config_json or self.source_path
-        with pkg_resources.path("dat", config_json) as path:
-            if self._mtime != path.stat().st_mtime:
-                logger.debug('read in the updated config file')
-                self._mtime = path.stat().st_mtime
-                self._data = json.loads(path.read_bytes(),
-                                        object_pairs_hook=self._object_hook)
+    def __call__(self, config_json: Optional[Union[str, Path]] = None) -> _Data:
+        path = Path(config_json or self.source_path)
+        # if sources are updated, read in sources again and update _Data
+        # this way there is no need to stop the program if the sources are updated
+        if self._mtime != path.stat().st_mtime:
+            logger.debug('read in the updated config file')
+            self._mtime = path.stat().st_mtime
+            try:  # read in new data and update only if the json is valid
+                data = json.loads(path.read_bytes(), object_pairs_hook=self._object_hook)
+                self._data = data
+            except json.JSONDecodeError as err:
+                logger.exception(err)
         return self.data
 
 
@@ -71,5 +78,4 @@ Configuration = _Configuration(DEFAULT_CONFIG)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    a = Configuration()
-    print(a)
+    print(Configuration(DEFAULT_CONFIG))
