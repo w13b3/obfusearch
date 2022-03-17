@@ -27,9 +27,9 @@ def create_query_url(search_engine: str, query: str) -> str:
 
 
 async def navigate(client: AsyncClient,
-                       url: str,
-                       **client_opts: Optional
-                       ) -> Response:
+                   url: str,
+                   **client_opts: Optional
+                   ) -> Response:
     resp = Response(404, content=b'', request=Request('GET', url))
     try:
         # follow_redirects option is default False
@@ -52,7 +52,6 @@ async def iter_web_content(urls: Sequence[str],
                 continue  # next url in for-loop
             else:
                 yield resp
-
 
 
 if __name__ == '__main__':

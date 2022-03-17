@@ -73,6 +73,8 @@ async def main(config_json: Optional[Union[str, Path]] = None) -> None:
 
                 for awaitable in asyncio.as_completed(tasks):
                     resp: Response = await awaitable
+                    logger.info(f"visited {resp.url}")
+                    logger.info(f"received {len(resp.content)} bytes of content")
 
         except KeyboardInterrupt:
             break
@@ -82,5 +84,5 @@ async def main(config_json: Optional[Union[str, Path]] = None) -> None:
             await client.aclose()
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s_%(levelname)s: %(name)s - %(message)s')
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s_%(levelname)s %(name)s %(funcName)s: %(message)s')
     asyncio.run(main())

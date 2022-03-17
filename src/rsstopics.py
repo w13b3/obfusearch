@@ -16,8 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 import feedparser
 from feedparser import FeedParserDict
 
-from src import config
-from src.config import Configuration
+from config import Configuration
 
 
 logger = logging.getLogger(__name__)
@@ -35,6 +34,7 @@ def get_topics(config_json: Optional[Union[str, Path]] = None) -> Iterator[str]:
     data = Configuration(config_json)
 
     feeds = data.rss_feeds[:]  # copy of the rss_feeds
+    logger.info(f"read {len(feeds)} number of rss feeds")
     random.shuffle(feeds)  # shuffle the feeds in-place
 
     # request all the feeds
@@ -51,8 +51,9 @@ def get_topics(config_json: Optional[Union[str, Path]] = None) -> Iterator[str]:
 
 
 if __name__ == '__main__':
+    from config import DEFAULT_CONFIG
     logging.basicConfig(level=logging.DEBUG)
 
-    for item in get_topics(config.DEFAULT_CONFIG):
+    for item in get_topics(DEFAULT_CONFIG):
         print(item)
 
